@@ -32,7 +32,11 @@ const companySchema = new Schema({
     profileUrl:{
         type: String,
     },
-    jobPosts:[{type: Schema.Types.ObjectId, ref:"Jobs"}]
+    jobPosts:[{type: Schema.Types.ObjectId, ref:"Jobs"}],
+    createdAt: {
+        type: Date,
+        default: Date.now, // Automatically set the current date/time when a company is created
+    },
 });
 
 //middlewares

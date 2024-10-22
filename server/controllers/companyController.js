@@ -185,13 +185,13 @@ export const getCompanyProfile = async(req,res,next) =>{
 //Get ALL COMPANIES
 export const getCompanies = async(req,res,next) =>{
     try{
-        const {search, sort,location} = req.query;
+        const {query, sort,location} = req.query;
 
         // conditions for searching filters
         const queryObject  ={};
 
-        if(search){
-            queryObject.name = {$regex:search , $options:"i"}
+        if(query){
+            queryObject.name = {$regex:query , $options:"i"}
 
         }
         if(location){

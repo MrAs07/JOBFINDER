@@ -21,7 +21,7 @@ const jobSchema = new mongoose.Schema({
     vacancies:{
         type:Number
     },
-    experiences:{
+    experience:{
         type: Number,
         default: 0,
     },

@@ -1,16 +1,20 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { useForm } from "react-hook-form";
+import { set, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { HiLocationMarker } from "react-icons/hi";
 import { AiOutlineMail } from "react-icons/ai";
 import { FiPhoneCall, FiEdit3, FiUpload } from "react-icons/fi";
+import { LiaEdit } from "react-icons/lia";
 import { Link, useParams } from "react-router-dom";
 import { companies, jobs } from "../utils/data";
 import { CustomButton, JobCard, Loading, TextInput } from "../components";
+import { apiRequest, handleFileUpload } from "../utils";
+import { Login } from "../redux/userSlice";
 
 const CompnayForm = ({ open, setOpen }) => {
   const { user } = useSelector((state) => state.user);
+  
   const {
     register,
     handleSubmit,
@@ -19,14 +23,59 @@ const CompnayForm = ({ open, setOpen }) => {
     formState: { errors },
   } = useForm({
     mode: "onChange",
-    defaultValues: { ...user?.user },
+    defaultValues: { ...user },
   });
 
   const dispatch = useDispatch();
   const [profileImage, setProfileImage] = useState("");
   const [uploadCv, setUploadCv] = useState("");
+  const [isLoading , setIsLoading] = useState(false);
+  const [errMsg, setErrMsg] = useState({status: false,message:""});
 
-  const onSubmit = () => {};
+  const onSubmit = async(data) => {
+    setIsLoading(true);
+    setErrMsg(null);
+
+    // const uri = profileImage && (await handleFileUpload(profileImage));
+    let uri = null;
+    if (profileImage) {
+        uri = await handleFileUpload(profileImage);
+    }
+
+    const newData = uri ? {...data, profileUrl:uri} : data;
+
+    try{
+      const res = await apiRequest({
+        url: "/companies/update-company",
+        token: user?.token,
+        data:newData,
+        method: "PUT",
+      });
+      setIsLoading(false);
+      // console.log(res);
+
+      if(res.status === "failed"){
+        setErrMsg({...res});
+      } else {
+        setErrMsg({status:"success", message: res.message});
+        const newData ={ 
+          token: res?.token,
+          ...res?.user
+        }
+        dispatch(Login(newData));
+        localStorage.setItem("userInfo", JSON.stringify(data));
+
+        setTimeout(()=>{
+          window.location.reload();
+        },1500)
+      }
+
+    }
+    catch (err){
+      console.log(err);
+      setIsLoading(false);
+    }
+  };
 
   const closeModal = () => setOpen(false);
 
@@ -140,11 +189,15 @@ const CompnayForm = ({ open, setOpen }) => {
                     </div>
 
                     <div className='mt-4'>
-                      <CustomButton
+                    {isLoading ? (
+                      <Loading/>
+                    ): 
+                    <CustomButton
                         type='submit'
                         containerStyles='inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-8 py-2 text-sm font-medium text-white hover:bg-[#1d4fd846] hover:text-[#1d4fd8] focus:outline-none '
                         title={"Submit"}
                       />
+                    }
                     </div>
                   </form>
                 </Dialog.Panel>
@@ -160,12 +213,38 @@ const CompnayForm = ({ open, setOpen }) => {
 const CompanyProfile = () => {
   const params = useParams();
   const { user } = useSelector((state) => state.user);
+  // console.log("About in User", user);
   const [info, setInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [openForm, setOpenForm] = useState(false);
 
+  const fetchCompany = async()=>{
+    setIsLoading(true);
+    let id = null;
+
+    if(params.id && params.id !== undefined){
+      id = params?.id;
+    } else {
+      id = user?._id;
+    }
+
+    try{
+      const res = await apiRequest({
+        url: "/companies/get-company/" +id,
+        method: "GET",
+      });
+      setInfo(res.data);
+      setIsLoading(false);
+    } catch(error){
+      console.log(error);
+      setIsLoading(false);
+    }
+  }
+
+  
   useEffect(() => {
-    setInfo(companies[parseInt(params?.id) - 1 ?? 0]);
+    // setInfo(companies[parseInt(params?.id) - 1 ?? 0]);
+    fetchCompany()
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }, []);
 
@@ -178,13 +257,14 @@ const CompanyProfile = () => {
       <div className=''>
         <div className='w-full flex flex-col md:flex-row gap-3 justify-between'>
           <h2 className='text-gray-600 text-xl font-semibold'>
-            Welcome, {info?.name}
+            Welcome, {user.name}
           </h2>
 
           {user?.user?.accountType === undefined &&
-            info?._id === user?.user?._id && (
-              <div className='flex items-center justifu-center py-5 md:py-0 gap-4'>
+            info?._id === user?._id && (
+              <div className='flex items-center justify-center py-5 md:py-0 gap-4'>
                 <CustomButton
+                  title={<LiaEdit />}
                   onClick={() => setOpenForm(true)}
                   iconRight={<FiEdit3 />}
                   containerStyles={`py-1.5 px-3 md:px-5 focus:outline-none bg-blue-600  hover:bg-blue-700 text-white rounded text-sm md:text-base border border-blue-600`}
@@ -223,10 +303,11 @@ const CompanyProfile = () => {
         <p>Jobs Posted</p>
 
         <div className='flex flex-wrap gap-3'>
-          {jobs?.map((job, index) => {
+          {info?.jobPosts?.map((job, index) => {
             const data = {
               name: info?.name,
               email: info?.email,
+              logo: info?.profileUrl,
               ...job,
             };
             return <JobCard job={data} key={index} />;

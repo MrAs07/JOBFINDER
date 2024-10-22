@@ -1,7 +1,12 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import { JobImg } from "../assets";
 
 const About = () => {
+const user  = useSelector((state)=> {
+  
+return state.user;
+})
   return (
     <div className='container mx-auto flex flex-col gap-8 2xl:gap-14 py-6 text-white '>cd 
       <div className='w-full flex flex-col-reverse md:flex-row gap-10 items-center p-5'>

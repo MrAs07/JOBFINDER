@@ -8,7 +8,7 @@ const AuthPage = () => {
   const {user} = useSelector(state => state.user)
   const [open, setOpen] = useState(true);
   const location = useLocation();
-
+  
   let from = location?.state?.from?.pathname || "/";
 
   if(user.token){

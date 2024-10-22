@@ -8,9 +8,16 @@ import { AiOutlineClose, AiOutlineLogout } from "react-icons/ai";
 import { Link } from "react-router-dom";
 import { users } from "../utils/data";
 import CustomButton from './CustomButton';
+import {useSelector , useDispatch} from "react-redux";
+import { Logout } from '../redux/userSlice';
 
-function MenuList({ user }) {
-  const handleLogOut = () => { }
+function MenuList({ user,onClick }) {
+  const dispatch = useDispatch();
+  
+  const handleLogout = () => {
+    dispatch(Logout());
+    window.location.replace("/")
+   }
 
   return (
     <div>
@@ -18,7 +25,7 @@ function MenuList({ user }) {
       <Menu as='div' className="">
         <div className='flex'>
           <Menu.Button className="inline-flex  items-center  py-2 text-sm font-medium
-        text-gray-500 hover:bg-gray-50 hover:text-gray-900
+        text-white hover:bg-gray-50 hover:text-gray-900
         group
         rounded-md
         focus:outline-none
@@ -60,7 +67,7 @@ function MenuList({ user }) {
                       className={`${active ? "block px-4 py-2 text-sm text-white hover:bg-fuchsia-500"
                           : " text-gray-500"}
                   group flex w-full items-center rounded-md p-2 text-sm` }
-                    // onClick={onClick}
+                     onClick={onClick}
                     >
                       <CgProfile
                         className={
@@ -102,9 +109,12 @@ function MenuList({ user }) {
 }
 
 const Navbar = () => {
-  const user = users[1];
+
+  const user = useSelector((state) => state.user.user);
+
+  // console.log("navbar m ========="+ user);
+  
   const [isOpen, setIsOpen] = useState(false);
-  console.log(user)
   const handleCloseNavbar = () => {
     setIsOpen((prev) => !prev);
 
@@ -129,7 +139,15 @@ const Navbar = () => {
             </li>
 
             <li className='text-gray-400 text-lg font-bold hover:text-violet-700'>
-              <Link to="/upload-job">UploadJob</Link>
+              <Link 
+              to={user?.accountType==="seeker"
+              ? "Application"
+              :"upload-job"}>
+                {user?.accountType==="seeker" 
+                ? "Application"
+                :"Upload Job"
+                }
+              </Link>
             </li>
 
             <li className='text-gray-400 text-lg font-bold hover:text-violet-700'>
@@ -160,43 +178,41 @@ const Navbar = () => {
         </nav>
 
         {/* Mobile menu */}
-        <div className={
-          `${isOpen ? "absolute flex bg-fuchsia-300"
-            : "hidden"} container  lg:hidden flex-col pl-8 gap-1 py-5`
-        }>
-          <Link to='/' onClick={handleCloseNavbar}>
-            Find Job
-          </Link>
-          <Link to='/companies' onClick={handleCloseNavbar}>
-            Companies
-          </Link>
-          <Link
-            onClick={handleCloseNavbar}
-            to={
-              user?.accountType === "seeker" ? "Applications" : "Upload Job"
-            }
-          >
-            {user?.accountType === "seeker" ? "Applications" : "Upload Job"}
-          </Link>
+        <div className={`${isOpen ? "absolute flex bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500 shadow-lg animate-gradient-x transition-all ease-in-out duration-500" : "hidden"} container lg:hidden flex-col pl-8 gap-5 py-6 rounded-b-lg`}>
+  
+  <Link to='/' onClick={handleCloseNavbar} className="text-xl font-semibold text-white flex items-center hover:text-yellow-300 transition-transform duration-300 transform hover:scale-105">
+    <i className="fas fa-briefcase mr-2"></i> Find Job
+  </Link>
 
-          <Link to='/about-us' onClick={handleCloseNavbar}>
-            About
-          </Link>
-          <div className='w-full py-10'>
-            {!user?.token ? (
-              <a href='/user-auth'>
-                <CustomButton
-                  title="Sign In"
-                  containerStyles={'text-pink-600 py-1.5 px-5 focus:outline-none hover:bg-blue-700 hover:text-white rounded-full text-base border border-purple-600'}
-                />
-              </a>
-            ) : (
-              <div>
-                <MenuList user={user} onClick={handleCloseNavbar} />
-              </div>
-            )}
-          </div>
-        </div>
+  <Link to='/companies' onClick={handleCloseNavbar} className="text-xl font-semibold text-white flex items-center hover:text-yellow-300 transition-transform duration-300 transform hover:scale-105">
+    <i className="fas fa-building mr-2"></i> Companies
+  </Link>
+
+  <Link onClick={handleCloseNavbar} to={user?.accountType === "seeker" ? "Application" : "upload-job"} className="text-xl font-semibold text-white flex items-center hover:text-yellow-300 transition-transform duration-300 transform hover:scale-105">
+    <i className="fas fa-file-alt mr-2"></i> {user?.accountType === "seeker" ? "Application" : "Upload Job"}
+  </Link>
+
+  <Link to='/about-us' onClick={handleCloseNavbar} className="text-xl font-semibold text-white flex items-center hover:text-yellow-300 transition-transform duration-300 transform hover:scale-105">
+    <i className="fas fa-info-circle mr-2"></i> About
+  </Link>
+
+  <div className='w-full py-8 flex justify-center'>
+    {!user?.token ? (
+      <a href='/user-auth'>
+        <CustomButton
+          title="Sign In"
+          containerStyles='bg-gradient-to-r from-yellow-400 to-pink-500 text-white py-2 px-6 focus:outline-none hover:bg-yellow-500 rounded-full text-lg shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl'
+        />
+      </a>
+    ) : (
+      <div className='w-full justify-center mr-8'>
+        <MenuList user={user} onClick={handleCloseNavbar} />
+      </div>
+    )}
+  </div>
+</div>
+
+
       </div>
     </>
   )
