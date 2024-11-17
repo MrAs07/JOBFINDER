@@ -31,7 +31,7 @@ export const createApplication = async (req, res, next) => {
         const isUserApplied = await Application.findOne({
             user: userId,
             job: jobId
-            });u
+            });
         if (isUserApplied) {
                 return res.status(400).json({
                     status: "failed", 
